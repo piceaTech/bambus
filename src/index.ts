@@ -7,3 +7,4 @@ export {correctFunctionBasedOnName} from './misc';
 export {JSONAPIController} from './jsonApiController';
 export {JSONAPIFormatter} from './JSONAPIFormatter';
 export {Model, ModelClazz} from './model';
+export {action, route} from './annotations'
