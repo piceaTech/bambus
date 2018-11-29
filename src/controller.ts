@@ -4,8 +4,6 @@ import { actionsSymbol, routesSymbol } from './symbols';
 
 
 export interface controllerFunction{
-  method: string,
-  path:string,
   name: string,
   func: PropertyDescriptor
 }
@@ -14,8 +12,8 @@ export class Controller {
   prefix: string;
   name: string;
   router: Router;
-  [actionsSymbol]: controllerFunction[];
-  [routesSymbol]: controllerFunction[];
+  [actionsSymbol]: {[name: string]: controllerFunction};
+  [routesSymbol]: {[name: string]: controllerFunction};
   constructor(){
     const lastPart = this.constructor.name.slice(-10);
     if(lastPart !== "Controller"){
@@ -36,11 +34,12 @@ export class Controller {
 
   }
   createAllActions(){
-    for (let obj of this[actionsSymbol] || []) {
-
-      let toCall = correctFunctionBasedOnName(this.router, obj.method);
-
-      toCall(`${obj.method.toUpperCase()} ${this.name}:${obj.name}`, obj.path, obj.func.value.bind(this))
+    for (let name in this[actionsSymbol] || {}) {
+      let obj = this[actionsSymbol][name];
+      let [method, path] = name.split(' ');
+      let toCall = correctFunctionBasedOnName(this.router, method);
+      
+      toCall(`${method.toUpperCase()} ${this.name}:${obj.name}`, path, obj.func.value.bind(this))
 
 
     }

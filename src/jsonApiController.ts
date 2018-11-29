@@ -28,8 +28,9 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
   @route('get', '/')
   async getAll(ctx: BambusContext<T>, next: Function) {
     debug(`getall ${this.name}`);
+    let include = parseIncludeParam(ctx, this.modelClass)
     let wherePart = ctx.state.query || ctx.query || {};
-    ctx.model = await this.modelClass.findAll({where: wherePart, include: parseIncludeParam(ctx, this.modelClass)}); // TODO
+    ctx.model = await this.modelClass.findAll({where: wherePart, include}); // TODO
     // wir müssen hier besser mal noch nachsehen, dass wir nicht alles mitnehmen
     // es müssen immer alle relationships dargestellt werden,
   }
@@ -116,11 +117,12 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
 
   createAllRoutes(){
     // migration nach misc
-    for (let obj of this[routesSymbol] || []) {
+    for (let name in this[routesSymbol] || {}) {
+      let obj = this[routesSymbol][name];
+      let [method, path] = name.split(' ');
 
-      let toCall = correctFunctionBasedOnName(this.router, obj.method);
-      
-      toCall(`${obj.method.toUpperCase()} ${this.name}:${obj.name}`, obj.path, obj.func.value.bind(this))
+      let toCall = correctFunctionBasedOnName(this.router, method);
+      toCall(`${method.toUpperCase()} ${this.name}:${obj.name}`, path, obj.func.value.bind(this))
 
 
     }

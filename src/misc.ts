@@ -52,6 +52,7 @@ export async function setRelationshipsFromData<T extends Model<T>>(model: T, bod
 
 export function parseIncludeParam<T extends Model<T>>(ctx: Context, modelClass: ModelClazz<T>): Array<IIncludeOptions>{
   let includeQuery = (ctx && ctx.query && ctx.query.include) || "";
+  delete ctx.query.include; // TODO make faster
   let toReturn: includeParamInterface = {};
 
   for (let assoc in modelClass.associations) {
