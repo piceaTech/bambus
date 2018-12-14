@@ -29,7 +29,7 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
   async getAll(ctx: BambusContext<T>, next: Function) {
     debug(`getall ${this.name}`);
     let include = parseIncludeParam(ctx, this.modelClass)
-    let wherePart = ctx.state.query || ctx.query || {};
+    let wherePart = ctx.state.filter || ctx.query.filter || {};
     ctx.model = await this.modelClass.findAll({where: wherePart, include}); // TODO
     // wir müssen hier besser mal noch nachsehen, dass wir nicht alles mitnehmen
     // es müssen immer alle relationships dargestellt werden,
@@ -37,7 +37,7 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
   @route('get', '/:id')
   async getOne(ctx: BambusContext<T>, next: Function){
     debug(`get ${this.name} ${ctx.params.id}`);
-    ctx.model = await this.modelClass.findOne<T>({where: {id: ctx.params.id, ...ctx.state.query},
+    ctx.model = await this.modelClass.findOne<T>({where: {id: ctx.params.id, ...ctx.state.filter},
       include: parseIncludeParam(ctx, this.modelClass)
     });
   }
@@ -80,37 +80,35 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
   @route('patch', '/:id')
   async patch(ctx: BambusContext<T>, next: Function){
     debug(`patch ${this.name}`);
-    let model = await this.modelClass.findOne<T>({where: ctx.state.query || {id: ctx.params.id}});
+    let model = await this.modelClass.findOne<T>({where: ctx.state.filter || {id: ctx.params.id}});
 
     filterBody(ctx.request.body, this.modelClass);
 
     if(typeof ctx.request.body !== 'object'){
       return ctx.formatter.status = 404;
     }
-    else{
-      let attributes = Object.keys(ctx.request.body).filter(item => this.modelAssocs.indexOf(item) === -1)
-      for (let attribute of attributes) {
-        debug(attribute);
-        model[attribute] = (ctx.request.body as any)[attribute]; //it is definitly a key of the body
-      }
-      debug(ctx.request.body);
-      await setRelationshipsFromData(model, ctx.request.body); // das schreibt schon in die DB. Macht es das wirklich?
-      // debug(model.get('customer'), model);
-      await model.save();
-      
-      // @ts-ignore Fehler weil der generische keine id festgelegt hat, aber ich das einfach mal voraussetze
-      ctx.model = await this.modelClass.findOne<T>({where: {
-          id: ctx.params.id
-        },
-        include: [{all: true, attributes: ['id']}]
-      });
-      ctx.formatter.status = 201;
+    
+    let attributes = Object.keys(ctx.request.body).filter(item => this.modelAssocs.indexOf(item) === -1)
+    for (let attribute of attributes) {
+      debug(attribute);
+      model[attribute] = (ctx.request.body as any)[attribute]; //it is definitly a key of the body
     }
+    debug(ctx.request.body);
+    await setRelationshipsFromData(model, ctx.request.body); // das schreibt schon in die DB. Macht es das wirklich?
+    // debug(model.get('customer'), model);
+    await model.save();
+    
+    // @ts-ignore Fehler weil der generische keine id festgelegt hat, aber ich das einfach mal voraussetze
+    ctx.model = await this.modelClass.findOne<T>({where: {where: ctx.state.filter || {id: ctx.params.id}},
+      include: [{all: true, attributes: ['id']}]
+    });
+    ctx.formatter.status = 201;
+    
   }
   @route('delete', '/:id')
   async del(ctx: BambusContext<T>, next: Function){
     debug(`get ${this.name} ${ctx.params.id}`);
-    await this.modelClass.destroy({where: ctx.state.query || {id: ctx.params.id}});
+    await this.modelClass.destroy({where: ctx.state.filter || {id: ctx.params.id}});
     
     ctx.formatter.status = 204;
   }
@@ -122,9 +120,19 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
       let [method, path] = name.split(' ');
 
       let toCall = correctFunctionBasedOnName(this.router, method);
-      toCall(`${method.toUpperCase()} ${this.name}:${obj.name}`, path, obj.func.value.bind(this))
+      toCall(`route ${method.toUpperCase()} ${this.name}:${obj.name}`, path, obj.func.value.bind(this))
 
 
+    }
+  }
+
+  afterFormatterMiddleware: (() => Router.IMiddleware)[] = [];
+  executeAfterFormatter(fn: () => Router.IMiddleware){
+    this.afterFormatterMiddleware.push(fn.bind(this));
+  }
+  createMiddlewareAfterFormatter(){
+    for(let func of this.afterFormatterMiddleware){
+      func();
     }
   }
   getRouter() : Router{
@@ -149,13 +157,12 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
         break;
       }
     }
-
-    // debug(this[routesSymbol]);
-
     this.createAllActions();
 
     const formatter = new JSONAPIFormatter<T>(this.name, this.modelClass)
     this.router.use(formatter.middleware.bind(formatter))
+
+    this.createMiddlewareAfterFormatter();
 
     this.createAllRoutes();
     

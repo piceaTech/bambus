@@ -52,7 +52,6 @@ export async function setRelationshipsFromData<T extends Model<T>>(model: T, bod
 
 export function parseIncludeParam<T extends Model<T>>(ctx: Context, modelClass: ModelClazz<T>): Array<IIncludeOptions>{
   let includeQuery = (ctx && ctx.query && ctx.query.include) || "";
-  delete ctx.query.include; // TODO make faster
   let toReturn: includeParamInterface = {};
 
   for (let assoc in modelClass.associations) {
@@ -102,7 +101,7 @@ export function correctFunctionBasedOnName(router: Router, methodName: string): 
 }
 export function filterBody<T extends Model<T>>(body: any, modelClass: ModelClazz<T>){
   // remove all entities which are in the
-  for(let notIntern of modelClass.noIntern){
+  for(let notIntern of (modelClass.noIntern || [])){
     if(typeof body[notIntern] !== 'undefined'){
       body[notIntern] = undefined;
     }

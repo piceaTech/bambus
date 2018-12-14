@@ -39,7 +39,7 @@ export class Controller {
       let [method, path] = name.split(' ');
       let toCall = correctFunctionBasedOnName(this.router, method);
       
-      toCall(`${method.toUpperCase()} ${this.name}:${obj.name}`, path, obj.func.value.bind(this))
+      toCall(`action ${method.toUpperCase()} ${this.name}:${obj.name}`, path, obj.func.value.bind(this))
 
 
     }
