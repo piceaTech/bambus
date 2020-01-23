@@ -99,7 +99,7 @@ export class JSONAPIController<T extends Model<T>> extends Controller{
     await model.save();
     
     // @ts-ignore Fehler weil der generische keine id festgelegt hat, aber ich das einfach mal voraussetze
-    ctx.model = await this.modelClass.findOne<T>({where: {where: ctx.state.filter || {id: ctx.params.id}},
+    ctx.model = await this.modelClass.findOne<T>({ where: ctx.state.filter || { id: ctx.params.id },
       include: [{all: true, attributes: ['id']}]
     });
     ctx.formatter.status = 201;
