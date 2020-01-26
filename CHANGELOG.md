@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.1.7-1"></a>
+## [0.1.7-1](https://github.com/piceaTech/bambus/compare/v0.1.7-0...v0.1.7-1) (2020-01-26)
+
+
+### Bug Fixes
+
+* Needed additions for sub-relationships ([5669bfa](https://github.com/piceaTech/bambus/commit/5669bfa))
+
+
+
 <a name="0.1.7-0"></a>
 ## [0.1.7-0](https://github.com/piceaTech/bambus/compare/v0.1.4...v0.1.7-0) (2020-01-26)
 
