@@ -15,12 +15,13 @@ interface KoaBody{
   [index: string]: any
 }
 
-interface includeParamInterface{
-  [index: string]: {
-    model: any, attributes?: string[], as: string
-  }
+interface includeObjectInterface{
+  [index: string]: includeInterface
 }
 
+interface includeInterface{
+  model: any, attributes?: string[], as: string, include?: includeInterface[]
+}
 
 export async function setRelationshipsFromData<T extends Model<T>>(model: T, body: KoaBody){
   // console.log('misc', model);
@@ -47,31 +48,36 @@ export async function setRelationshipsFromData<T extends Model<T>>(model: T, bod
   debug('now back');
 }
 
-
+export function includeFromAssoc<T extends Model<T>>(modelClass: ModelClazz<T>): includeObjectInterface{
+  let toReturn: includeObjectInterface = {};
+  for (let assoc in modelClass.associations) {
+    if (!modelClass.noExtern || modelClass.noExtern.indexOf(assoc) === -1) {
+        // debug(modelClass, modelClass.associations[assoc].target);
+        // debug(modelClass.associations[assoc].as);
+        toReturn[assoc] = { model: modelClass.associations[assoc].target, attributes: ['id'], as: modelClass.associations[assoc].as }; // modelClass.associations[assoc]
+    }
+  }
+  return toReturn;
+}
 
 
 export function parseIncludeParam<T extends Model<T>>(ctx: Context, modelClass: ModelClazz<T>): Array<IIncludeOptions>{
   let includeQuery = (ctx && ctx.query && ctx.query.include) || "";
-  let toReturn: includeParamInterface = {};
-
-  for (let assoc in modelClass.associations) {
-    if(!modelClass.noExtern || modelClass.noExtern.indexOf(assoc) === -1){
-      // debug(modelClass, modelClass.associations[assoc].target);
-      // debug(modelClass.associations[assoc].as);
-      toReturn[assoc] = {model: modelClass.associations[assoc].target, attributes: ['id'], as: modelClass.associations[assoc].as}; // modelClass.associations[assoc]
-    }
-  }
-
+  let toReturn: includeObjectInterface = includeFromAssoc(modelClass);
 
   const splitArray = includeQuery.split(',');
   for (let include of splitArray) {
     if(!include || (modelClass.noExtern.indexOf(include) !== -1)){
       continue;
     }
-    if(!toReturn[include]){
+    if(!toReturn[include]){// include paramenter must be an existing relationship for that model
       ctx.throw(400)
     }
     toReturn[include] = {model: toReturn[include].model, as: toReturn[include].as};
+
+    let subIncludeObj = includeFromAssoc(toReturn[include].model);
+    let subInclude = Object.keys(subIncludeObj).map(function (key) { return subIncludeObj[key]; });
+    toReturn[include] = { model: toReturn[include].model, as: toReturn[include].as, include: subInclude};
   }
   const toReturnArray = Object.keys(toReturn).map(function (key) { return toReturn[key]; });
   return toReturnArray;

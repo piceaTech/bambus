@@ -19,9 +19,10 @@ declare module 'koa' {
 
 
 interface IOptions{
-  [index: string]: {ref:string, attributes?:string[]} | Function | string[],
-  ['attributes']: string[],
-  ['typeForAttribute']?: Function
+  [index: string]: IOptions | Function | string[] | string,
+  ['attributes']?: string[],
+  ['typeForAttribute']?: Function,
+  ['ref']?: string,
 }
 interface IRelationships{
   id: any
@@ -117,6 +118,9 @@ function addRelationships<T extends Model<T>>(modelClass: ModelClazz<T>, opts: I
       opts[assoc] = {
         ref: 'id',
         attributes: getAllPresentableAttributesFor(modelClass.associations[assoc].target)
+      }
+      if(assoc !== 'attributes' && assoc !== 'typeForAttribute' && assoc !== 'ref'){
+        addRelationships(modelClass.associations[assoc].target, <IOptions> opts[assoc], include); // we can cast as we know it will never be another field
       }
     }
     else{
