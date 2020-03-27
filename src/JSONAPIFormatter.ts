@@ -103,8 +103,7 @@ export class JSONAPIFormatter<T extends Model<T>> {
 
 function getAllPresentableAttributesFor<T extends Model<T>>(modelClass: ModelClazz<T>){
   const noExtern = modelClass.noExtern || [];
-  // console.log('aa', typeof modelClass, modelClass.attributes, modelClass.prototype.attributes);
-  let attributes = Object.keys(modelClass.attributes).concat(Object.keys(modelClass.associations))
+  let attributes = Object.keys(modelClass.rawAttributes).concat(Object.keys(modelClass.associations))
     .filter(item => item !== 'id')
     .filter(item => noExtern.indexOf(item) === -1)
   return attributes

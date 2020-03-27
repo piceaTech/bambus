@@ -22,8 +22,10 @@
   "dependencies": {
     "jsonapi-serializer": "git+https://github.com/spruce/jsonapi-serializer",
     "koa": "^2.6.1",
-    "koa-router": "^7.4.0",
-    "sequelize-typescript": "^0.6.6"
+    "koa-router": "^7.4.0"
+  },
+  "peerDependencies": {
+    "sequelize-typescript": "^1.0.0"
   },
   "devDependencies": {
     "@types/koa": "^2.0.46",
