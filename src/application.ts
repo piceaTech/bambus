@@ -87,7 +87,7 @@ export default class Bambus{
     this.appRouter.use(fn);
   }
 
-  listen(port: number){
+  prepare(){
     for(let controller in this.controllers){
       let instance = this.controllers[controller];
       let instanceRouter = instance.getRouter();
@@ -96,6 +96,10 @@ export default class Bambus{
     }
     this.application.use(this.appRouter.routes());
     this.application.use(this.appRouter.allowedMethods());
+  }
+
+  listen(port: number){
+    this.prepare();
     this.application.listen(...arguments);
   }
   get app(){
