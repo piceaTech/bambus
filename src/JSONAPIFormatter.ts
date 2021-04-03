@@ -131,7 +131,7 @@ function addRelationships<T extends Model<T>>(
         addRelationships(
           modelClass.associations[assoc].target,
           <IOptions>opts[assoc],
-          include
+          ""
         ); // we can cast as we know it will never be another field
       }
     } else {
